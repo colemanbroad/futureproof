@@ -135,7 +135,7 @@ pub const Buffer = struct {
                 }
             }
         }
-        std.debug.warn("[Buffer] Unimplemented API: {}\n", .{name});
+        std.debug.warn("[Buffer] Unimplemented API: {any}\n", .{name});
         return Status.Okay;
     }
 };

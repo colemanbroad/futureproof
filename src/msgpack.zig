@@ -25,18 +25,6 @@ pub const Key = union(enum) {
         };
     }
 
-    fn eql(a: Key, b: Key) bool {
-        if (@as(@TagType(Key), a) != b) {
-            return false;
-        } else {
-            return std.mem.eql(u8, a.bytes(), b.bytes());
-        }
-    }
-
-    fn hash(self: Key) u64 {
-        return std.hash.Wyhash.hash(0, self.bytes());
-    }
-
     fn to_value(self: Key) Value {
         return switch (self) {
             .Int => Value{ .Int = self.Int },
@@ -48,11 +36,42 @@ pub const Key = union(enum) {
     }
 };
 
+
+const TagType = std.meta.TagType;
+
+pub const KeyContext = struct {
+    pub fn hash(self: @This(), s: Key) u64 {
+        return std.hash.Wyhash.hash(0, s.bytes());
+    }
+    pub fn eql(self: @This(), a: Key, b: Key) bool {
+        // return eqlString(a, b);
+        if (@as(TagType(Key), a) != b) {
+            return false;
+        } else {
+            return std.mem.eql(u8, a.bytes(), b.bytes());
+        }
+    }
+
+    // fn eql(a: Key, b: Key) bool {
+    //     if (@as(TagType(Key), a) != b) {
+    //         return false;
+    //     } else {
+    //         return std.mem.eql(u8, a.bytes(), b.bytes());
+    //     }
+    // }
+
+    // fn hash(self: Key) u64 {
+    //     return std.hash.Wyhash.hash(0, self.bytes());
+    // }
+
+
+};
+
+
 pub const KeyValueMap = std.hash_map.HashMap(
     Key,
     Value,
-    Key.hash,
-    Key.eql,
+    KeyContext,
     std.hash_map.DefaultMaxLoadPercentage,
 );
 
@@ -94,8 +113,8 @@ pub const Value = union(enum) {
             .Map => |map| {
                 var itr = map.iterator();
                 while (itr.next()) |entry| {
-                    entry.key.to_value().destroy(alloc);
-                    entry.value.destroy(alloc);
+                    entry.key_ptr.*.to_value().destroy(alloc);
+                    entry.value_ptr.*.destroy(alloc);
                 }
                 self_mut.Map.deinit();
             },
@@ -308,7 +327,7 @@ pub const Value = union(enum) {
                         _ = try out.write(&std.mem.toBytes(j));
                     },
                     else => std.debug.panic(
-                        "String is too large: {} > {}\n",
+                        "String is too large: {any} > {any}\n",
                         .{ s.len, std.math.maxInt(u32) },
                     ),
                 }
@@ -332,7 +351,7 @@ pub const Value = union(enum) {
                         _ = try out.write(&std.mem.toBytes(j));
                     },
                     else => std.debug.panic(
-                        "Data is too large: {} > {}\n",
+                        "Data is too large: {any} > {any}\n",
                         .{ d.len, std.math.maxInt(u32) },
                     ),
                 }
@@ -355,7 +374,7 @@ pub const Value = union(enum) {
                         _ = try out.write(&std.mem.toBytes(j));
                     },
                     else => std.debug.panic(
-                        "Array is too large: {} > {}\n",
+                        "Array is too large: {any} > {any}\n",
                         .{ a.len, std.math.maxInt(u32) },
                     ),
                 }
@@ -383,8 +402,8 @@ pub const Value = union(enum) {
                 }
                 var itr = m.iterator();
                 while (itr.next()) |entry| {
-                    try entry.key.to_value().serialize(out);
-                    try entry.value.serialize(out);
+                    try entry.key_ptr.*.to_value().serialize(out);
+                    try entry.value_ptr.*.serialize(out);
                 }
             },
 
@@ -422,7 +441,7 @@ pub const Value = union(enum) {
                         _ = try out.write(&std.mem.toBytes(j));
                     },
                     std.math.maxInt(u32) + 1...std.math.maxInt(u64) => {
-                        std.debug.panic("Ext data is too large: {}\n", .{count});
+                        std.debug.panic("Ext data is too large: {any}\n", .{count});
                     },
                 }
                 _ = try out.writeByte(@bitCast(u8, e.type));

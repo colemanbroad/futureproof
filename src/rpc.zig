@@ -8,6 +8,8 @@ const blocking_queue = @import("blocking_queue.zig");
 
 const RPCQueue = blocking_queue.BlockingQueue(msgpack.Value);
 
+const TagType = std.meta.TagType;
+
 const RPC_TYPE_REQUEST: u32 = 0;
 const RPC_TYPE_RESPONSE: u32 = 1;
 const RPC_TYPE_NOTIFICATION: u32 = 2;
@@ -70,7 +72,7 @@ pub const RPC = struct {
             .alloc = alloc,
         };
 
-        const thread = try std.Thread.spawn(listener, Listener.run);
+        const thread = try std.Thread.spawn(Listener.run, listener);
 
         const rpc = .{
             .listener = listener,
@@ -117,7 +119,7 @@ pub const RPC = struct {
         // Check for error responses
         const err = response.Array[2];
         const result = response.Array[3];
-        if (err != @TagType(msgpack.Value).Nil) {
+        if (err != TagType(msgpack.Value).Nil) {
             // TODO: handle error here
             std.debug.panic("Got error in msgpack-rpc call: {}\n", .{err.Array[1]});
         }

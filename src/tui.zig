@@ -60,8 +60,8 @@ pub const Tui = struct {
 
         var itr = self.buffers.iterator();
         while (itr.next()) |buf| {
-            buf.value.deinit();
-            self.alloc.destroy(buf.value);
+            buf.value_ptr.*.deinit();
+            self.alloc.destroy(buf.value_ptr.*);
         }
         self.buffers.deinit();
         c.shaderc_compiler_release(self.compiler);
@@ -312,7 +312,7 @@ pub const Tui = struct {
             } else {
                 std.debug.print("Adding new codepoint: {x}\n", .{codepoint});
                 char = self.font.add_glyph(codepoint) catch |err| {
-                    std.debug.panic("Could not add glyph {}: {}\n", .{ codepoint, err });
+                    std.debug.panic("Could not add glyph {x}: {d}\n", .{ codepoint, err });
                 };
                 // We've only added one glyph to the texture, so just copy
                 // this one line over to our local uniforms:
@@ -364,28 +364,28 @@ pub const Tui = struct {
 
         var itr = attr.iterator();
         while (itr.next()) |entry| {
-            if (std.mem.eql(u8, entry.key.RawString, "foreground")) {
-                out.foreground = @intCast(u32, entry.value.UInt);
-            } else if (std.mem.eql(u8, entry.key.RawString, "background")) {
-                out.background = @intCast(u32, entry.value.UInt);
-            } else if (std.mem.eql(u8, entry.key.RawString, "special")) {
-                out.special = @intCast(u32, entry.value.UInt);
-            } else if (std.mem.eql(u8, entry.key.RawString, "bold") and entry.value.Boolean) {
+            if (std.mem.eql(u8, entry.key_ptr.*.RawString, "foreground")) {
+                out.foreground = @intCast(u32, entry.value_ptr.*.UInt);
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "background")) {
+                out.background = @intCast(u32, entry.value_ptr.*.UInt);
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "special")) {
+                out.special = @intCast(u32, entry.value_ptr.*.UInt);
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "bold") and entry.value_ptr.*.Boolean) {
                 out.flags |= c.FP_FLAG_BOLD;
-            } else if (std.mem.eql(u8, entry.key.RawString, "italic") and entry.value.Boolean) {
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "italic") and entry.value_ptr.*.Boolean) {
                 out.flags |= c.FP_FLAG_ITALIC;
-            } else if (std.mem.eql(u8, entry.key.RawString, "undercurl") and entry.value.Boolean) {
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "undercurl") and entry.value_ptr.*.Boolean) {
                 out.flags |= c.FP_FLAG_UNDERCURL;
-            } else if (std.mem.eql(u8, entry.key.RawString, "reverse") and entry.value.Boolean) {
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "reverse") and entry.value_ptr.*.Boolean) {
                 out.flags |= c.FP_FLAG_REVERSE;
-            } else if (std.mem.eql(u8, entry.key.RawString, "underline") and entry.value.Boolean) {
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "underline") and entry.value_ptr.*.Boolean) {
                 out.flags |= c.FP_FLAG_UNDERLINE;
-            } else if (std.mem.eql(u8, entry.key.RawString, "strikethrough") and entry.value.Boolean) {
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "strikethrough") and entry.value_ptr.*.Boolean) {
                 out.flags |= c.FP_FLAG_STRIKETHROUGH;
-            } else if (std.mem.eql(u8, entry.key.RawString, "standout") and entry.value.Boolean) {
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "standout") and entry.value_ptr.*.Boolean) {
                 out.flags |= c.FP_FLAG_STANDOUT;
             } else {
-                std.debug.warn("Unknown hlAttr: {} {}\n", .{ entry.key, entry.value });
+                std.debug.warn("Unknown hlAttr: {any} {any}\n", .{ entry.key_ptr.*, entry.value_ptr.* });
             }
         }
         return out;
@@ -410,26 +410,26 @@ pub const Tui = struct {
         };
         var itr = mode.iterator();
         while (itr.next()) |entry| {
-            if (std.mem.eql(u8, entry.key.RawString, "cursor_shape")) {
-                if (std.mem.eql(u8, entry.value.RawString, "horizontal")) {
+            if (std.mem.eql(u8, entry.key_ptr.*.RawString, "cursor_shape")) {
+                if (std.mem.eql(u8, entry.value_ptr.*.RawString, "horizontal")) {
                     out.cursor_shape = c.FP_CURSOR_HORIZONTAL;
-                } else if (std.mem.eql(u8, entry.value.RawString, "vertical")) {
+                } else if (std.mem.eql(u8, entry.value_ptr.*.RawString, "vertical")) {
                     out.cursor_shape = c.FP_CURSOR_VERTICAL;
-                } else if (std.mem.eql(u8, entry.value.RawString, "block")) {
+                } else if (std.mem.eql(u8, entry.value_ptr.*.RawString, "block")) {
                     out.cursor_shape = c.FP_CURSOR_BLOCK;
                 } else {
-                    std.debug.panic("Unknown cursor shape: {}\n", .{entry.value});
+                    std.debug.panic("Unknown cursor shape: {any}\n", .{entry.value_ptr.*});
                 }
-            } else if (std.mem.eql(u8, entry.key.RawString, "cell_percentage")) {
-                out.cell_percentage = @intCast(u32, entry.value.UInt);
-            } else if (std.mem.eql(u8, entry.key.RawString, "blinkwait")) {
-                out.blinkwait = @intCast(u32, entry.value.UInt);
-            } else if (std.mem.eql(u8, entry.key.RawString, "blinkon")) {
-                out.blinkon = @intCast(u32, entry.value.UInt);
-            } else if (std.mem.eql(u8, entry.key.RawString, "blinkoff")) {
-                out.blinkoff = @intCast(u32, entry.value.UInt);
-            } else if (std.mem.eql(u8, entry.key.RawString, "attr_id")) {
-                out.attr_id = @intCast(u32, entry.value.UInt);
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "cell_percentage")) {
+                out.cell_percentage = @intCast(u32, entry.value_ptr.*.UInt);
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "blinkwait")) {
+                out.blinkwait = @intCast(u32, entry.value_ptr.*.UInt);
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "blinkon")) {
+                out.blinkon = @intCast(u32, entry.value_ptr.*.UInt);
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "blinkoff")) {
+                out.blinkoff = @intCast(u32, entry.value_ptr.*.UInt);
+            } else if (std.mem.eql(u8, entry.key_ptr.*.RawString, "attr_id")) {
+                out.attr_id = @intCast(u32, entry.value_ptr.*.UInt);
             } else {
                 // Ignore other elements for now
             }
@@ -479,10 +479,10 @@ pub const Tui = struct {
                     .Okay => {},
                 }
             } else {
-                std.debug.warn("Invalid buffer: {}\n", .{buf_num});
+                std.debug.warn("Invalid buffer: {any}\n", .{buf_num});
             }
         } else {
-            std.debug.warn("Unknown method target: {}\n", .{target.type});
+            std.debug.warn("Unknown method target: {any}\n", .{target.type});
         }
     }
 
@@ -511,7 +511,7 @@ pub const Tui = struct {
                 }
             }
         }
-        std.debug.warn("[Tui] Unknown Fp event: {}\n", .{name});
+        std.debug.warn("[Tui] Unknown Fp event: {any}\n", .{name});
     }
 
     fn call_api(self: *Self, event: []const msgpack.Value) !void {
@@ -542,7 +542,7 @@ pub const Tui = struct {
                 }
             }
             if (!matched) {
-                std.debug.warn("[Tui] Unimplemented API: {}\n", .{api_name});
+                std.debug.warn("[Tui] Unimplemented API: {any}\n", .{api_name});
             }
         }
     }
@@ -635,7 +635,7 @@ pub const Tui = struct {
                     }
                     const cmd = try std.fmt.allocPrint(
                         tmp_alloc,
-                        ":sign place {} line={} name=fpErr buffer={}",
+                        ":sign place {d} line={d} name=fpErr buffer={d}",
                         .{
                             line_num,
                             line_num,
@@ -646,7 +646,7 @@ pub const Tui = struct {
 
                     const lexp = try std.fmt.allocPrint(
                         tmp_alloc,
-                        ":ladd \"{}:{}\"",
+                        ":ladd \"{d}:{s}\"",
                         .{ line_num, line_err.msg },
                     );
                     try self.rpc.call_release("nvim_command", .{lexp});
@@ -837,16 +837,16 @@ pub const Tui = struct {
         std.debug.assert(out.len == 0);
 
         if ((mods & c.GLFW_MOD_SHIFT) != 0) {
-            out = try std.fmt.allocPrint(alloc, "S-{}", .{out});
+            out = try std.fmt.allocPrint(alloc, "S-{any}", .{out});
         }
         if ((mods & c.GLFW_MOD_CONTROL) != 0) {
-            out = try std.fmt.allocPrint(alloc, "C-{}", .{out});
+            out = try std.fmt.allocPrint(alloc, "C-{any}", .{out});
         }
         if ((mods & c.GLFW_MOD_ALT) != 0) {
-            out = try std.fmt.allocPrint(alloc, "A-{}", .{out});
+            out = try std.fmt.allocPrint(alloc, "A-{any}", .{out});
         }
         if ((mods & c.GLFW_MOD_SUPER) != 0) {
-            out = try std.fmt.allocPrint(alloc, "D-{}", .{out});
+            out = try std.fmt.allocPrint(alloc, "D-{any}", .{out});
         }
         return out;
     }
@@ -885,17 +885,17 @@ pub const Tui = struct {
             if (mods_ != 0) {
                 const mod_str = try encode_mods(alloc, mods_);
                 std.debug.assert(mod_str.len != 0);
-                str = try std.fmt.allocPrint(alloc, "<{}{}>", .{ mod_str, str });
+                str = try std.fmt.allocPrint(alloc, "<{any}{any}>", .{ mod_str, str });
             }
         } else if (get_encoded(key)) |enc| {
             if (mods == 0) {
-                str = try std.fmt.allocPrint(alloc, "<{}>", .{enc});
+                str = try std.fmt.allocPrint(alloc, "<{any}>", .{enc});
             } else {
                 const mod_str = try encode_mods(alloc, mods);
-                str = try std.fmt.allocPrint(alloc, "<{}{}>", .{ mod_str, enc });
+                str = try std.fmt.allocPrint(alloc, "<{any}{any}>", .{ mod_str, enc });
             }
         } else {
-            std.debug.print("Got unknown key {} {}\n", .{ key, mods });
+            std.debug.print("Got unknown key {any} {any}\n", .{ key, mods });
         }
 
         if (str) |s| {
@@ -929,7 +929,7 @@ pub const Tui = struct {
                 self.mouse_tile_y, // row
                 self.mouse_tile_x, // col
             }) catch |err| {
-                std.debug.panic("Failed to call nvim_input_mouse: {}", .{err});
+                std.debug.panic("Failed to call nvim_input_mouse: {any}", .{err});
             };
         }
     }
@@ -944,7 +944,7 @@ pub const Tui = struct {
             c.GLFW_MOUSE_BUTTON_RIGHT => "right",
             c.GLFW_MOUSE_BUTTON_MIDDLE => "middle",
             else => |b| {
-                std.debug.warn("Ignoring unknown mouse: {}\n", .{b});
+                std.debug.warn("Ignoring unknown mouse: {any}\n", .{b});
                 return;
             },
         };
@@ -952,7 +952,7 @@ pub const Tui = struct {
         const action_str = switch (action) {
             c.GLFW_PRESS => "press",
             c.GLFW_RELEASE => "release",
-            else => |b| std.debug.panic("Invalid mouse action: {}\n", .{b}),
+            else => |b| std.debug.panic("Invalid mouse action: {any}\n", .{b}),
         };
 
         const mods_str = try encode_mods(alloc, mods);
@@ -978,7 +978,7 @@ export fn key_cb(w: ?*c.GLFWwindow, key: c_int, scancode: c_int, action: c_int, 
     var tui = @ptrCast(*Tui, @alignCast(8, ptr));
     if (action == c.GLFW_PRESS or action == c.GLFW_REPEAT) {
         tui.on_key(key, mods) catch |err| {
-            std.debug.panic("Failed on_key: {}\n", .{err});
+            std.debug.panic("Failed on_key: {any}\n", .{err});
         };
     }
 }
@@ -987,7 +987,7 @@ export fn mouse_pos_cb(w: ?*c.GLFWwindow, x: f64, y: f64) void {
     const ptr = c.glfwGetWindowUserPointer(w) orelse std.debug.panic("Missing user pointer", .{});
     var tui = @ptrCast(*Tui, @alignCast(8, ptr));
     tui.on_mouse_pos(x, y) catch |err| {
-        std.debug.print("Failed on_mouse_pos: {}\n", .{err});
+        std.debug.print("Failed on_mouse_pos: {any}\n", .{err});
     };
 }
 
@@ -995,7 +995,7 @@ export fn mouse_button_cb(w: ?*c.GLFWwindow, button: c_int, action: c_int, mods:
     const ptr = c.glfwGetWindowUserPointer(w) orelse std.debug.panic("Missing user pointer", .{});
     var tui = @ptrCast(*Tui, @alignCast(8, ptr));
     tui.on_mouse_button(button, action, mods) catch |err| {
-        std.debug.print("Failed on_mouse_button: {}\n", .{err});
+        std.debug.print("Failed on_mouse_button: {any}\n", .{err});
     };
 }
 
@@ -1003,6 +1003,6 @@ export fn scroll_cb(w: ?*c.GLFWwindow, dx: f64, dy: f64) void {
     const ptr = c.glfwGetWindowUserPointer(w) orelse std.debug.panic("Missing user pointer", .{});
     var tui = @ptrCast(*Tui, @alignCast(8, ptr));
     tui.on_scroll(dx, dy) catch |err| {
-        std.debug.print("Failed on_scroll: {}\n", .{err});
+        std.debug.print("Failed on_scroll: {any}\n", .{err});
     };
 }

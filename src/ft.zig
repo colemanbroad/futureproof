@@ -29,7 +29,7 @@ pub const Atlas = struct {
 
     pub fn deinit(self: *Self) void {
         status_to_err(c.FT_Done_FreeType(self.ft)) catch |err| {
-            std.debug.panic("Could not destroy library: {}", .{err});
+            std.debug.panic("Could not destroy library: {any}", .{err});
         };
         self.alloc.free(self.tex);
         self.table.deinit(self.alloc);
@@ -139,7 +139,7 @@ pub fn build_atlas(
         .ft = undefined,
         .face = undefined,
 
-        .table = std.hash_map.AutoHashMapUnmanaged(u32, u32).init(alloc),
+        .table = std.hash_map.AutoHashMapUnmanaged(u32, u32) {},
 
         // GPU uniforms
         .u = undefined,
