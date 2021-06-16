@@ -18,7 +18,8 @@ pub fn build(b: *Builder) void {
     // Libraries!
     exe.linkSystemLibrary("glfw3");
     exe.linkSystemLibrary("freetype2");
-    exe.linkSystemLibrary("stdc++"); // needed for shaderc
+    exe.linkSystemLibrary("stdc++"); // needed for shaderc 
+    exe.linkSystemLibrary("c++");
 
     exe.addLibPath("vendor/wgpu");
     exe.linkSystemLibrary("wgpu_native");
@@ -37,6 +38,10 @@ pub fn build(b: *Builder) void {
         exe.addFrameworkDir("/System/Library/Frameworks");
         exe.linkFramework("Foundation");
         exe.linkFramework("AppKit");
+        exe.linkFramework("Cocoa");
+        // exe.linkFramework("OpenGL");
+        exe.linkFramework("IOKit");
+        // exe.linkFramework("OpenGL");
     }
 
     const run_cmd = exe.run();
