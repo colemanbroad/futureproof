@@ -19,7 +19,6 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("glfw3");
     exe.linkSystemLibrary("freetype2");
     exe.linkSystemLibrary("stdc++"); // needed for shaderc 
-    exe.linkSystemLibrary("c++");
 
     exe.addLibPath("vendor/wgpu");
     exe.linkSystemLibrary("wgpu_native");
