@@ -11,6 +11,8 @@ pub fn main() anyerror!void {
 
     if (c.glfwInit() != c.GLFW_TRUE) {
         std.debug.panic("Could not initialize glfw", .{});
+    } else{
+        std.debug.print("Could YES initialize glfw", .{});
     }
 
     var tui = try Tui.init(alloc);

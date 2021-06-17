@@ -185,7 +185,9 @@ pub const Tui = struct {
         { // Send the template text to the first buffer
             const src = try util.file_contents(
                 tmp_alloc,
-                "shaders/preview.template.frag",
+                // "shaders/preview.template.frag",
+                // "shaders/grid.frag",
+                "examples/seascape.frag",
             );
             var line_count: u32 = 1;
             for (src[0..(src.len - 2)]) |char| {
